@@ -1,0 +1,71 @@
+# Operator Namespace
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: openshift-cluster-csi-drivers
+spec:
+  finalizers:
+  - kubernetes
+# Vault CSI Namespace
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  labels:
+    pod-security.kubernetes.io/audit: privileged
+    pod-security.kubernetes.io/audit-version: latest
+    pod-security.kubernetes.io/enforce: privileged
+    pod-security.kubernetes.io/enforce-version: latest
+    pod-security.kubernetes.io/warn: privileged
+    pod-security.kubernetes.io/warn-version: latest
+  name: vault-csi
+spec:
+  finalizers:
+  - kubernetes
+# Webapp SA
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: webapp-sa
+  namespace: vault-csi
+# Operator Subscription
+---
+apiVersion: operators.coreos.com/v1alpha1
+kind: Subscription
+metadata:
+  labels:
+    operators.coreos.com/secrets-store-csi-driver-operator.openshift-cluster-csi-drivers: ""
+  name: secrets-store-csi-driver-operator
+  namespace: openshift-cluster-csi-drivers
+spec:
+  channel: stable
+  installPlanApproval: Automatic
+  name: secrets-store-csi-driver-operator
+  source: redhat-operators
+  sourceNamespace: openshift-marketplace
+# CSI Driver
+---
+apiVersion: operator.openshift.io/v1
+kind: ClusterCSIDriver
+metadata:
+    name: secrets-store.csi.k8s.io
+spec:
+  managementState: Managed
+# Secret Provider Class
+---
+apiVersion: secrets-store.csi.x-k8s.io/v1
+kind: SecretProviderClass
+metadata:
+  name: vault-database
+  namespace: vault-csi
+spec:
+  provider: vault
+  parameters:
+    vaultAddress: "https://vault-vault-csi.apps.nuc.k8socp.com"
+    roleName: "database"
+    objects: |
+      - objectName: "db-password"
+        secretPath: "secret/data/db-pass"
+        secretKey: "password"

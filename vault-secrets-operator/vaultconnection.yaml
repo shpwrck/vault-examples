@@ -1,0 +1,8 @@
+apiVersion: secrets.hashicorp.com/v1beta1
+kind: VaultConnection
+metadata:
+  name: vaultconnection
+  namespace: openshift-operators
+spec:
+  address: https://vault.k8socp.com:8200
+  skipTLSVerify: false

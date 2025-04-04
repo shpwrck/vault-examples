@@ -1,0 +1,13 @@
+apiVersion: secrets.hashicorp.com/v1beta1
+kind: VaultAuth
+metadata:
+  name: vault-k8socp-com
+  namespace: openshift-operators
+spec:
+  kubernetes:
+    role: root
+    serviceAccount: vault-secrets-operator-controller-manager
+    tokenExpirationSeconds: 600
+  method: kubernetes
+  mount: ms01/kubernetes/secrets-operator/
+  vaultConnectionRef: vaultconnection

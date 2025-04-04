@@ -21,6 +21,8 @@ injector:
 server:
   dev:
     enabled: true
+  authDelegator:
+    enabled: false
 
   serviceAccount:
     create: true
@@ -39,5 +41,3 @@ server:
   readinessProbe:
     path: "/v1/sys/health?uninitcode=204"
 
-authDelegator:
-  enabled: true

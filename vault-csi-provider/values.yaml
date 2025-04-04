@@ -5,20 +5,35 @@
 
 global:
   openshift: true
+  namespace: vault-csi
+  tlsDisable: true
+  externalVaultAddr: "https://vault.k8socp.com:8200"
 
 injector:
-  image:
-    repository: "registry.connect.redhat.com/hashicorp/vault-k8s"
-    tag: "1.6.2-ubi"
-
-  agentImage:
-    repository: "registry.connect.redhat.com/hashicorp/vault"
-    tag: "1.19.0-ubi"
+  enabled: false
 
 server:
+  dev:
+    enabled: true
+  authDelegator:
+    enabled: false
   image:
     repository: "registry.connect.redhat.com/hashicorp/vault"
     tag: "1.19.0-ubi"
 
   readinessProbe:
     path: "/v1/sys/health?uninitcode=204"
+
+  route:
+    enabled: true
+    host: ""
+    tls:
+      termination: edge    
+
+csi:
+  enabled: true
+  daemonSet:
+    providersDir: /var/run/secrets-store-csi-providers
+    securityContext:
+      container:
+        privileged: true
