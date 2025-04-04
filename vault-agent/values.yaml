@@ -1,0 +1,43 @@
+# Copyright (c) HashiCorp, Inc.
+# SPDX-License-Identifier: MPL-2.0
+
+# These overrides are appropriate defaults for deploying this chart on OpenShift
+
+global:
+  openshift: true
+  tlsDisable: true
+
+injector:
+  enabled: true
+
+  image:
+    repository: "registry.connect.redhat.com/hashicorp/vault-k8s"
+    tag: "1.6.2-ubi"
+
+  agentImage:
+    repository: "registry.connect.redhat.com/hashicorp/vault"
+    tag: "1.19.0-ubi"
+
+server:
+  dev:
+    enabled: true
+
+  serviceAccount:
+    create: true
+    name: vault-sa
+
+  route:
+    enabled: true
+    host: ""
+    tls:
+      termination: edge
+
+  image:
+    repository: "registry.connect.redhat.com/hashicorp/vault"
+    tag: "1.19.0-ubi"
+
+  readinessProbe:
+    path: "/v1/sys/health?uninitcode=204"
+
+authDelegator:
+  enabled: true

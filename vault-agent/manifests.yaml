@@ -1,0 +1,66 @@
+# Service Account
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: internal-app
+  namespace: vault-agent
+# Deployment
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+   name: default-inject
+   namespace: vault-agent
+   labels:
+      app: default-inject
+spec:
+   selector:
+     matchLabels:
+       app: default-inject
+   replicas: 1
+   template:
+     metadata:
+       annotations:
+         vault.hashicorp.com/agent-inject: 'true'
+         vault.hashicorp.com/role: 'internal-app'
+         vault.hashicorp.com/agent-inject-secret-database-config.txt: 'internal/data/database/config'
+       labels:
+         app: default-inject
+     spec:
+       serviceAccountName: internal-app
+       containers:
+       - name: default-inject
+         image: jweissig/app:0.0.1
+# Deployment
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+   name: template-inject
+   namespace: vault-agent
+   labels:
+      app: template-inject
+spec:
+   selector:
+     matchLabels:
+       app: template-inject
+   replicas: 1
+   template:
+     metadata:
+       annotations:
+         vault.hashicorp.com/agent-inject-status: "update"
+         vault.hashicorp.com/agent-inject-template-database-config.txt: |
+           {{- with secret "internal/data/database/config" -}}
+           postgresql://{{ .Data.data.username }}:{{ .Data.data.password }}@postgres:5432/wizard
+           {{- end -}}        
+         vault.hashicorp.com/agent-inject: 'true'
+         vault.hashicorp.com/role: 'internal-app'
+         vault.hashicorp.com/agent-inject-secret-database-config.txt: 'internal/data/database/config'
+       labels:
+         app: template-inject
+     spec:
+       serviceAccountName: internal-app
+       containers:
+       - name: template-inject
+         image: jweissig/app:0.0.1
