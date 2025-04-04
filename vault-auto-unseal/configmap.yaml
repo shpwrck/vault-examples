@@ -1,0 +1,10 @@
+apiVersion: v1
+data:
+  init-script.sh: "#!/bin/bash\nset -e\nsleep 10\nexport VAULT_ADDR=http://vault-server-unseal.vault-server-unseal:8200\nif
+    [ \"$MY_POD_NAME\" == \"vault-server-unseal-0\" ] \nthen\n  vault operator init
+    -status || vault operator init >> /vault/data/init.txt\nfi\nsleep infinity"
+immutable: false
+kind: ConfigMap
+metadata:
+  name: init-script
+  namespace: vault-server-unseal

@@ -1,0 +1,91 @@
+global:
+  openshift: true
+  tlsDisable: true
+
+injector:
+  image:
+    repository: "registry.connect.redhat.com/hashicorp/vault-k8s"
+    tag: "1.6.2-ubi"
+
+  agentImage:
+    repository: "registry.connect.redhat.com/hashicorp/vault"
+    tag: "1.19.0-ubi"
+
+server:
+  readinessProbe:
+    enabled: false
+
+  extraContainers:
+  - name: distributed-init
+    image: registry.connect.redhat.com/hashicorp/vault:1.19.0-ubi
+    command: [sh, -c]
+    env:
+    - name: MY_POD_NAME
+      valueFrom:
+        fieldRef:
+          fieldPath: metadata.name
+    args:
+    - /mnt/init/init-script.sh
+    volumeMounts:
+    - name: init
+      mountPath: /mnt/init/
+    - name: data
+      mountPath: /vault/data
+
+  volumes:
+  - name: init
+    configMap:
+      name: init-script
+      defaultMode: 0777
+
+  route:
+    enabled: true
+    host: ""
+    tls:
+      termination: edge
+
+  ha:
+    enabled: true
+    raft:
+      enabled: true
+      setNodeId: true
+      config: |
+        ui = true
+        cluster_name = "vault-server-unseal"
+        cluster_addr  = "http://vault-server-unseal:8201"
+        api_addr      = "http://vault-server-unseal:8200"
+        disable_mlock = true
+
+        listener "tcp" {
+          tls_disable = true
+          address = "[::]:8200"
+          cluster_address = "[::]:8201"
+        }
+
+        storage "raft" {
+          path = "/vault/data"
+          retry_join {
+            leader_api_addr = "http://vault-server-unseal-0.vault-server-unseal-internal:8200"
+          }
+          retry_join {
+            leader_api_addr = "http://vault-server-unseal-1.vault-server-unseal-internal:8200"
+          }
+          retry_join {
+            leader_api_addr = "http://vault-server-unseal-2.vault-server-unseal-internal:8200"
+          }
+        }
+
+        service_registration "kubernetes" {}
+
+        seal "transit" {
+          address = "https://vault.k8socp.com:8200"
+          token = "" # "https://developer.hashicorp.com/vault/tutorials/auto-unseal/autounseal-transit#setup-the-transit-secrets-engine"
+          disable_renewal = "false"
+          key_name = "autounseal"
+          mount_path = "transit/"
+          tls_skip_verify = "false"
+        }
+
+  image:
+    repository: "registry.connect.redhat.com/hashicorp/vault"
+    tag: "1.19.0-ubi"
